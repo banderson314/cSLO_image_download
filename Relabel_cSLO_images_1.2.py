@@ -1,6 +1,6 @@
 #Relabeling cSLO image names
 #Made by Brandon Anderson, University of Pennsylvania
-#Version 1.0
+#Version 1.2
 #June 21, 2023
 
 #This converts the file names created by the Heidelberg imaging software (i.e. 0000E_000.tif) to a
@@ -44,6 +44,8 @@ def define_image_type(file_path):
         extracted_text = first_text.split(' ')[0]
 
         return extracted_text
+
+
 
 average_time_for_each_mouse = 0
 
