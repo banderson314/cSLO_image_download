@@ -1,19 +1,22 @@
 #Downloading cSLO images from Heidelberg Eye Explorer
 #Created by Brandon Anderson, University of Pennsylvania
-#Version 1.1
-#Last updated on March 27, 2023
+#Version 1.3
+#Last updated on July 2025
 
 
+print("Initiating script")
 #Imports
 import os
 import pyautogui
 import easyocr
-reader = easyocr.Reader(['en']) #This is just telling it that we want it to read English
+reader = easyocr.Reader(['en'], gpu=False, verbose=False) #This is just telling it that we want it to read English
 import re
 import shutil
 #from pynput import mouse
 from time import sleep
-
+from PIL import Image
+import numpy as np
+import re
 
 #Functions
 
@@ -188,3 +191,68 @@ for i in range(len(miceNumbers)):
     mainMenuButtonLocation = centerOfButton(mainMenuButtonLocation)
     pyautogui.click(mainMenuButtonLocation[0], mainMenuButtonLocation[1])
     sleep(1)
+
+
+
+print("Relabeling mice", end="\r", flush=True)
+
+def define_image_type(file_path):
+    # Open the TIFF image file
+    with Image.open(file_path) as img:
+        # Crop the bottom-left region of the image where the text is located
+        region = img.crop((0, img.height - 33, img.width, img.height))
+
+        # Convert the region to a NumPy array
+        region_array = np.array(region)
+
+        # Perform OCR on the region array
+        results = reader.readtext(region_array)
+
+        # Extract the recognized texts
+        texts = [result[1] for result in results]
+        # Extract the first item from the list
+        first_text = texts[0]
+        # Retrieve the text before the space
+        extracted_text = first_text.split(' ')[0]
+
+        return extracted_text
+
+
+
+
+def is_file_name_converted(file_name):
+    pattern = r"\d{3}_\w+_(OD|OS)_\w+\.tif"
+    return re.match(pattern, file_name) is not None
+
+def traverse_directory(root_dir):
+    count = 1
+    for mouse_dir in os.listdir(root_dir):
+        mouse_path = os.path.join(root_dir, mouse_dir)
+        number_of_mice = len(os.listdir(root_dir))
+        if os.path.isdir(mouse_path):
+            mouse_number = mouse_dir.split("_")[-1]
+            for eye_dir in os.listdir(mouse_path):
+                if eye_dir in ["OD", "OS"]:
+                    eye_path = os.path.join(mouse_path, eye_dir)
+                    for filename in os.listdir(eye_path):
+                        if filename.endswith(".tif"):
+                            if is_file_name_converted(filename):  # Check if file name is already converted
+                                continue  # Skip already converted file
+                            tif_file_path = os.path.join(eye_path, filename)
+                            image_type = define_image_type(tif_file_path)
+                            #image_type = define_image_type()  # Modify this according to your implementation
+                            file_name, file_ext = os.path.splitext(filename)
+                            file_number = file_name.split("_")[-1]
+                            new_file_name = f"{file_number}_{mouse_number}_{eye_dir}_{image_type}{file_ext}"
+                            old_file_path = os.path.join(eye_path, filename)
+                            new_file_path = os.path.join(eye_path, new_file_name)
+                            os.rename(old_file_path, new_file_path)
+            print(f"Mice relabeled: {count}/{number_of_mice}", end="\r", flush=True)
+            count += 1
+    print(f"Mice relabeled: {count-1}/{number_of_mice}")
+
+# Main code execution starts here
+cSLO_directory = path
+
+
+traverse_directory(cSLO_directory)
