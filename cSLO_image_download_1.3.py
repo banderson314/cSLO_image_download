@@ -75,27 +75,25 @@ print("Mice found: ")
 for i in range(number_of_mice):
 	print(mice_numbers[i])
 
+os.remove('imageOfText.png')
 
 def edit_mouse_numbers(mice_numbers):
 	root = tk.Tk()
 	root.title("Confirm Mouse Numbers")
-	root.resizable(False, False)
+	root.attributes("-topmost", True)
 
-	main_frame = ttk.Frame(root, padding=20)
+	main_frame = ttk.Frame(root, padding=10)
 	main_frame.grid()
 
 	header = ttk.Label(main_frame, text="Confirm or Edit Mouse Numbers")
-	header.grid(row=0, column=0, columnspan=2, pady=(0, 15))
+	header.grid(row=0, column=0, pady=(0, 5))
 
 	entries = []
 
 	# Entry rows
-	for row, value in enumerate(mice_numbers, start=1):
-		label = ttk.Label(main_frame, text=f"Mouse {row}:")
-		label.grid(row=row, column=0, sticky="e", padx=(0, 10), pady=5)
-
-		entry = ttk.Entry(main_frame, width=15)
-		entry.grid(row=row, column=1, pady=5)
+	for row, value in enumerate(mice_numbers):
+		entry = ttk.Entry(main_frame, width=20)
+		entry.grid(row=row, column=0, pady=1)
 		entry.insert(0, str(value))
 		entries.append(entry)
 
@@ -111,13 +109,10 @@ def edit_mouse_numbers(mice_numbers):
 		root.destroy()
 		exit()
 
-	# Centered button
 	ok_button = ttk.Button(main_frame, text="Okay", command=on_ok)
-	ok_button.grid(row=len(entries)+1, column=0, columnspan=2, pady=(15, 0))
+	ok_button.grid(row=len(entries)+1, column=0, pady=(15, 0))
 
 	root.protocol("WM_DELETE_WINDOW", on_close)
-
-	# Allow Enter key to trigger OK
 	root.bind("<Return>", lambda event: on_ok())
 
 	# Center window on screen
@@ -136,9 +131,6 @@ def edit_mouse_numbers(mice_numbers):
 
 # Launch editor window
 edit_mouse_numbers(mice_numbers)
-
-
-os.remove('imageOfText.png')
 
 
 #Making the folders for the images
