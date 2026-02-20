@@ -85,14 +85,15 @@ def edit_mouse_numbers(mice_numbers):
 	main_frame = ttk.Frame(root, padding=10)
 	main_frame.grid()
 
-	header = ttk.Label(main_frame, text="Confirm or Edit Mouse Numbers")
+	header = ttk.Label(main_frame, text="Confirm or edit mouse numbers")
 	header.grid(row=0, column=0, pady=(0, 5))
 
 	entries = []
 
 	# Entry rows
-	for row, value in enumerate(mice_numbers):
+	for mouse, value in enumerate(mice_numbers):
 		entry = ttk.Entry(main_frame, width=20)
+		row = mouse + 1
 		entry.grid(row=row, column=0, pady=1)
 		entry.insert(0, str(value))
 		entries.append(entry)
