@@ -1,6 +1,5 @@
 #Downloading cSLO images from Heidelberg Eye Explorer
 #Created by Brandon Anderson, University of Pennsylvania
-#Last updated on July 2025
 
 
 print("Initiating script")
@@ -8,14 +7,20 @@ import os
 import pyautogui
 import easyocr
 reader = easyocr.Reader(['en'], gpu=False, verbose=False) #This is just telling it that we want it to read English
-import re
 import shutil
+import cv2
 from time import sleep
+from datetime import datetime
 from PIL import Image
 import numpy as np
 import re
 import tkinter as tk
 from tkinter import ttk
+import tkinter.messagebox as messagebox
+from pyscreeze import Box
+import warnings
+warnings.filterwarnings("ignore", message=".*pin_memory.*")
+print("Imports complete")
 
 
 
@@ -128,14 +133,154 @@ def edit_mouse_numbers(mice_numbers):
 
 	root.mainloop()
 
-
-
 # Launch editor window
 edit_mouse_numbers(mice_numbers)
 
 
-#Making the folders for the images
 
+def ask_user_what_date_to_export():
+	user_chosen_date = None
+
+	root = tk.Tk()
+	root.title("Select Date to Export")
+
+	# Instructions
+	instruction_label = ttk.Label(
+		root,
+		text="Select a date to export images.\nChoose latest date or enter a custom date (mm/dd/yyyy).",
+		justify="left"
+	)
+	instruction_label.pack(anchor="w", padx=10, pady=5)
+
+	selected_option = tk.StringVar(value="latest")
+
+	def validate_date(date_text):
+		try:
+			datetime.strptime(date_text, "%m/%d/%Y")
+			return True
+		except ValueError:
+			return False
+
+	def on_ok():
+		nonlocal user_chosen_date
+
+		if selected_option.get() == "latest":
+			user_chosen_date = "latest date"
+			root.destroy()
+			return
+
+		date = entry.get().strip()
+
+		if date == "mm/dd/yyyy" or not date:
+			error_label.config(text="Please enter a date.", foreground="red")
+			return
+
+		if not validate_date(date):
+			error_label.config(text="Invalid date format. Use mm/dd/yyyy.", foreground="red")
+			return
+
+		user_chosen_date = date
+		root.destroy()
+
+	def on_close():
+		root.destroy()
+		exit()
+
+	def on_radio_change():
+		if selected_option.get() == "custom":
+			entry.config(state="normal")
+		else:
+			entry.config(state="disabled")
+
+	def on_entry_focus_in(event):
+		if entry.get() == "mm/dd/yyyy":
+			entry.delete(0, tk.END)
+			entry.config(foreground="black")
+
+	def on_entry_focus_out(event):
+		if not entry.get():
+			entry.insert(0, "mm/dd/yyyy")
+			entry.config(foreground="gray")
+
+	def on_key_press(event):
+		# Let Enter go through so it can trigger on_ok
+		if event.keysym == "Return":
+			return
+
+		# Allow control keys (Backspace, arrows, etc.)
+		if len(event.char) != 1:
+			return
+
+		# Only allow digits
+		if not event.char.isdigit():
+			return "break"
+
+		current = entry.get()
+
+		# Remove placeholder if present
+		if current == "mm/dd/yyyy":
+			entry.delete(0, tk.END)
+			current = ""
+
+		# Prevent typing beyond 10 chars
+		if len(current) >= 10:
+			return "break"
+
+		# Insert character manually
+		entry.insert(tk.INSERT, event.char)
+
+		new_text = entry.get()
+
+		# Auto-add "/" after month and day
+		if len(new_text) in (2, 5):
+			entry.insert(tk.INSERT, "/")
+
+		return "break"
+	# Radio buttons
+	rb_latest = ttk.Radiobutton(
+		root, text="Latest Date", variable=selected_option,
+		value="latest", command=on_radio_change
+	)
+	rb_latest.pack(anchor="w", padx=10, pady=5)
+
+	rb_custom = ttk.Radiobutton(
+		root, text="Enter Custom Date", variable=selected_option,
+		value="custom", command=on_radio_change
+	)
+	rb_custom.pack(anchor="w", padx=10)
+
+	# Entry
+	entry = ttk.Entry(root)
+	entry.pack(padx=10, pady=5, fill="x")
+
+	entry.insert(0, "mm/dd/yyyy")
+	entry.config(foreground="gray", state="disabled")
+
+	entry.bind("<FocusIn>", on_entry_focus_in)
+	entry.bind("<FocusOut>", on_entry_focus_out)
+	entry.bind("<KeyPress>", on_key_press)
+
+	# Error label
+	error_label = ttk.Label(root, text="")
+	error_label.pack(padx=10, pady=(0, 5))
+
+	# OK button
+	ok_button = ttk.Button(root, text="OK", command=on_ok)
+	ok_button.pack(padx=10, pady=10)
+	
+	root.protocol("WM_DELETE_WINDOW", on_close)
+	root.bind("<Return>", lambda event: on_ok())
+
+	root.mainloop()
+
+	return user_chosen_date
+
+date_to_use = ask_user_what_date_to_export()
+
+
+
+
+#Making the folders for the images
 path = "cSLO images"
 
 if os.path.exists(path):    #Removing the folder and everything in it if it already exists
@@ -146,6 +291,7 @@ for i in mice_numbers:
 	os.makedirs(os.path.join(path,str(i),"OS"))
 
 #Loop through the list of mice:
+failed_exports = []
 for i in range(len(mice_numbers)):
 
 	#Click on the mouse to go to the image page
@@ -155,6 +301,91 @@ for i in range(len(mice_numbers)):
 
 	pyautogui.doubleClick(mouse_title_click[0], mouse_title_click[1])
 	sleep(1)
+
+	# Clicking on the date, as needed
+	if date_to_use != "latest date":
+		def find_date_on_screen(target_date):
+			"""
+			Returns a single PyAutoGUI-style Box object for the lowest match on screen,
+			or None if no match is found.
+			"""
+
+			def normalize(text):
+				return (
+					text.replace("O", "0")
+						.replace("l", "1")
+						.replace("|", "/")
+						.replace(" ", "")
+				)
+
+			def extract_matches(results, target_compact):
+				matches = []
+
+				for bbox, text, confidence in results:
+					cleaned = normalize(text)
+
+					if target_compact in cleaned.replace("/", ""):
+						(tl, tr, br, bl) = bbox
+
+						left = int(tl[0])
+						top = int(tl[1])
+						width = int(tr[0] - tl[0])
+						height = int(bl[1] - tl[1])
+
+						matches.append(Box(left, top, width, height))
+
+				return matches
+
+			def run_ocr(image):
+				return reader.readtext(image, detail=1, paragraph=False)
+
+			# -------------------------
+			# SCREEN GRAB (BASE)
+			# -------------------------
+			img = np.array(pyautogui.screenshot())
+			target_compact = target_date.replace("/", "")
+
+			# -------------------------
+			# STAGE 1: GRAYSCALE ONLY
+			# -------------------------
+			gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+			results = run_ocr(gray)
+
+			matches = extract_matches(results, target_compact)
+
+			# fallback if needed
+			if not matches:
+				print("Enhancement needed")
+				enhanced = cv2.resize(gray, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
+				enhanced = cv2.convertScaleAbs(enhanced, alpha=1.3, beta=0)
+
+				results = run_ocr(enhanced)
+				matches = extract_matches(results, target_compact)
+
+			# -------------------------
+			# PICK LOWEST MATCH
+			# -------------------------
+			if not matches:
+				return None
+
+			lowest_match = max(matches, key=lambda box: box.top)
+			
+			return lowest_match
+
+		date_location = find_date_on_screen(date_to_use)
+		if date_location:
+			date_location_center = center_of_button(date_location)
+			pyautogui.click(date_location_center[0], date_location_center[1])
+		else:
+			#Go back to the main menu 
+			main_menu_button_location = pyautogui.locateOnScreen('files_for_python_script/mainMenu.png', grayscale=False)
+			main_menu_button_location = center_of_button(main_menu_button_location)
+			pyautogui.click(main_menu_button_location[0], main_menu_button_location[1])
+			sleep(1)
+			failed_exports.append(mice_numbers[i])
+			continue
+
+		
 
 
 	#Identifying the OD and OS boxes
@@ -243,7 +474,6 @@ for i in range(len(mice_numbers)):
 	sleep(1)
 
 
-
 print("Relabeling mice", end="\r", flush=True)
 
 def define_image_type(file_path):
@@ -306,3 +536,9 @@ cSLO_directory = path
 
 
 traverse_directory(cSLO_directory)
+
+if len(failed_exports) > 0:
+    messagebox.showwarning(
+        "Export Warning",
+        "The following exports failed:\n" + "\n".join(map(str, failed_exports))
+    )
