@@ -6,5 +6,6 @@ authors:
   orcid: "https://orcid.org/0000-0001-6502-9216"
 title: "Heidelberg Eye Explorer GUI Automation for Batch Image Export"
 version: "2.0"
+DOI: "10.5281/zenodo.23744529"
 date-released: 2026-10-28
 url: "https://github.com/banderson314/cSLO_image_download"
