@@ -1,12 +1,10 @@
-#Downloading cSLO images from Heidelberg Eye Explorer
-#Created by Brandon Anderson, University of Pennsylvania
-
+# Downloading cSLO images from Heidelberg Eye Explorer
 
 print("Initiating script")
 import os
 import pyautogui
 import easyocr
-reader = easyocr.Reader(['en'], gpu=False, verbose=False) #This is just telling it that we want it to read English
+reader = easyocr.Reader(['en'], gpu=False, verbose=False) # This is just telling it that we want it to read English
 import shutil
 import cv2
 from time import sleep
@@ -36,7 +34,7 @@ pyautogui.click(heidelberg_logo[0], heidelberg_logo[1])
 
 
 
-#Recording how many mice there are
+# Recording how many mice there are
 
 locations_of_black_circles = list(pyautogui.locateAllOnScreen('files_for_python_script/blackCircle.png', grayscale=True))
 number_of_black_circles = len(locations_of_black_circles)
@@ -57,7 +55,7 @@ print("Number of mice found: " + str(number_of_mice))
 
 
 
-#Identifying the mice listed on the screen
+# Identifying the mice listed on the screen
 
 mouse_title_coordinates = []
 
@@ -280,21 +278,21 @@ date_to_use = ask_user_what_date_to_export()
 
 
 
-#Making the folders for the images
+# Making the folders for the images
 path = "cSLO images"
 
-if os.path.exists(path):    #Removing the folder and everything in it if it already exists
+if os.path.exists(path):    # Removing the folder and everything in it if it already exists
 	shutil.rmtree(path)
 
 for i in mice_numbers:
 	os.makedirs(os.path.join(path,str(i),"OD"))
 	os.makedirs(os.path.join(path,str(i),"OS"))
 
-#Loop through the list of mice:
+# Loop through the list of mice:
 failed_exports = []
 for i in range(len(mice_numbers)):
 
-	#Click on the mouse to go to the image page
+	# Click on the mouse to go to the image page
 	mouse_title_click = mouse_title_coordinates[i]
 	mouse_title_click[0] = mouse_title_click[0] + 30
 	mouse_title_click[1] = mouse_title_click[1] + (height_of_text/2)
@@ -377,7 +375,7 @@ for i in range(len(mice_numbers)):
 			date_location_center = center_of_button(date_location)
 			pyautogui.click(date_location_center[0], date_location_center[1])
 		else:
-			#Go back to the main menu 
+			# Go back to the main menu 
 			main_menu_button_location = pyautogui.locateOnScreen('files_for_python_script/mainMenu.png', grayscale=False)
 			main_menu_button_location = center_of_button(main_menu_button_location)
 			pyautogui.click(main_menu_button_location[0], main_menu_button_location[1])
@@ -388,14 +386,14 @@ for i in range(len(mice_numbers)):
 		
 
 
-	#Identifying the OD and OS boxes
+	# Identifying the OD and OS boxes
 	divider_bar_location = pyautogui.locateOnScreen('files_for_python_script/borderOfOSandODtop.png', grayscale=False)
 	od_eye_box = [divider_bar_location.left + divider_bar_location.width, divider_bar_location.top + divider_bar_location.height]
 	os_eye_box = [divider_bar_location.left, divider_bar_location.top + divider_bar_location.height]
 
-	#Saving OD eye images
+	# Saving OD eye images
 	pyautogui.click(od_eye_box[0], od_eye_box[1])
-	with pyautogui.hold('ctrl'):        #selecting all of the images
+	with pyautogui.hold('ctrl'):        # selecting all of the images
 		pyautogui.press('a')
 
 	pyautogui.click(button='right', x=divider_bar_location.left + 90, y=divider_bar_location.top + 90)
@@ -430,9 +428,9 @@ for i in range(len(mice_numbers)):
 
 
 
-	#Saving OS eye images
+	# Saving OS eye images
 	pyautogui.click(os_eye_box[0], od_eye_box[1])
-	with pyautogui.hold('ctrl'):        #selecting all of the images
+	with pyautogui.hold('ctrl'):        # selecting all of the images
 		pyautogui.press('a')
 
 	above_first_os_image = pyautogui.locateOnScreen('files_for_python_script/aboveOSbox.png', grayscale=False)
@@ -467,7 +465,7 @@ for i in range(len(mice_numbers)):
 	sleep(1)
 
 
-	#Go back to the main menu
+	# Go back to the main menu
 	main_menu_button_location = pyautogui.locateOnScreen('files_for_python_script/mainMenu.png', grayscale=False)
 	main_menu_button_location = center_of_button(main_menu_button_location)
 	pyautogui.click(main_menu_button_location[0], main_menu_button_location[1])
@@ -520,7 +518,7 @@ def traverse_directory(root_dir):
 								continue  # Skip already converted file
 							tif_file_path = os.path.join(eye_path, filename)
 							image_type = define_image_type(tif_file_path)
-							#image_type = define_image_type()  # Modify this according to your implementation
+							# image_type = define_image_type()  # Modify this according to your implementation
 							file_name, file_ext = os.path.splitext(filename)
 							file_number = file_name.split("_")[-1]
 							new_file_name = f"{file_number}_{mouse_number}_{eye_dir}_{image_type}{file_ext}"

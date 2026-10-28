@@ -1,21 +1,41 @@
-There are three files of note here.
+# cSLO Image Download and Organization
 
- 
-cSLO_image_download_1.3.py
+There are three files of note in this repository:
 
-This is used with the Heidelberg imaging software to download images from multiple patients automatically. It reads which patients have been selected, makes folders for each patient (with OD and OS subfolders), and then exports the images to each of those folders. 
-Some things to keep in mind:
-You must have the Heidelberg imaging software open with patients selected
-It will only export the most recent date
-With our imaging protocol the OD and OS are reversed, so this program automatically switches what the imaging software thinks is "OS" to "OD" and vice versa
-It uses images of the software (found in files_for_python_script) to recognize how to interact with it, so if the software is a different version than what we originally designed it for, the user will need to take replacement screenshot images
+## `cSLO_image_download.py`
 
+This script is designed to work with the Heidelberg imaging software to automatically download images from multiple selected patients.
 
-make_folders_3.0.py
+The script:
 
-If cSLO_image_download_1.1 works for you, then this is not needed because it is built into that script. However, if that script isn't working out, you can use this program to automatically create folders for each patient with OD and OS subfolders. The user can then export the images manually into these folders.
+- Reads which patients are currently selected in the Heidelberg imaging software
+- Creates a folder for each patient, with `OD` and `OS` subfolders
+- Automatically exports the images into the appropriate patient and eye folders
 
+### Things to keep in mind
 
-Relabel_cSLO_images_1.0.py
+- The Heidelberg imaging software must be open with the desired patients selected before running the script.
+- With our imaging protocol, the OD and OS labels are reversed in the Heidelberg software. This script automatically switches the software's `OS` images to `OD` and vice versa.
+- The script uses screenshots of the Heidelberg software, located in `files_for_python_script`, to recognize and interact with different elements of the software. If the software is updated to a different version than the one this script was designed for, replacement screenshots may need to be taken.
 
-The Heidelberg imaging software exports the images with the following name style: 0000E_000.tif or something similar. I prefer image#_patient#_eye_image type.tif. This script assumes images are organized into eye folders labeled "OD" or "OS" and those eye folders are organized into patient folders (like what the previous two scripts make). It will look at the images to determine the image type (BAF, IRAF, etc.). This code has been incorporated into the main cSLO_image_download_x.x.py code so there is no need to use this code unless you want to relabel older images.
+## `make_folders.py`
+
+If `cSLO_image_download_1.3.py` is working properly, this script is not necessary because folder creation is built into the download script.
+
+If the download script is not working, however, this script can be used to automatically create a folder for each patient, with `OD` and `OS` subfolders. Images can then be exported manually from the Heidelberg imaging software into the appropriate folders.
+
+## `Relabel_cSLO_images.py`
+
+The Heidelberg imaging software exports images using filenames such as:
+
+`0000E_000.tif`
+
+I prefer images to use the following naming convention:
+
+`image#_patient#_eye_image type.tif`
+
+This script assumes that images are organized into patient folders, with `OD` and `OS` eye subfolders, as created by the previous two scripts.
+
+The script examines each image to determine its image type (e.g., BAF, IRAF) and then renames the images according to the preferred naming convention.
+
+This functionality has since been incorporated into the main `cSLO_image_download.py` script, so this script is generally only needed when relabeling older images.

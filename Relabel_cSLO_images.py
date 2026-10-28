@@ -1,13 +1,10 @@
-#Relabeling cSLO image names
-#Made by Brandon Anderson, University of Pennsylvania
-#Version 1.2
-#June 21, 2023
+# Relabeling cSLO image names
 
-#This converts the file names created by the Heidelberg imaging software (i.e. 0000E_000.tif) to a
-    #format that I prefer (image#_mouse#_eye_image type.tif)
-#This script assumes images are organized into eye folders labeled "OD" or "OS" and those eye folders
-    #are organized into mouse folders. It will ask you to select a directory that they are located in
-#This script goes really well wtih my cSLO_image_download_X.X.py script
+
+# This converts the file names created by the Heidelberg imaging software (i.e. 0000E_000.tif) to a
+    # format that I prefer (image# _mouse# _eye_image type.tif)
+# This script assumes images are organized into eye folders labeled "OD" or "OS" and those eye folders
+    # are organized into mouse folders. It will ask you to select a directory that they are located in
 
 import time
 print("Initiating script")
@@ -71,7 +68,7 @@ def traverse_directory(root_dir):
                                 continue  # Skip already converted file
                             tif_file_path = os.path.join(eye_path, filename)
                             image_type = define_image_type(tif_file_path)
-                            #image_type = define_image_type()  # Modify this according to your implementation
+                            # image_type = define_image_type()  # Modify this according to your implementation
                             file_name, file_ext = os.path.splitext(filename)
                             file_number = file_name.split("_")[-1]
                             new_file_name = f"{file_number}_{mouse_number}_{eye_dir}_{image_type}{file_ext}"
